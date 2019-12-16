@@ -1,6 +1,6 @@
 from environment import Grid2DSize, SnakesBackendSync
 from agents import RandomPlayer, KeyboardPlayer, GreedyAgent, BetterGreedyAgent
-from submission import MinimaxAgent, AlphaBetaAgent, TournamentAgent
+from submission import MinimaxAgent, AlphaBetaAgent, TournamentAgent, manhaten_dist
 from optparse import OptionParser
 import sys
 

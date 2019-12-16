@@ -1,8 +1,10 @@
-from environment import Player, GameState, GameAction, get_next_state
+from environment import Player, GameState, GameAction, get_next_state, SnakeAgentsList
 from utils import get_fitness
 import numpy as np
 from enum import Enum
 
+def manhaten_dist(p1: tuple, p2: tuple):
+    return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
 
 def heuristic(state: GameState, player_index: int) -> float:
     """
@@ -13,7 +15,16 @@ def heuristic(state: GameState, player_index: int) -> float:
     :return:
     """
     # Insert your code here...
-    pass
+    snake_length = state.snakes[player_index].length
+    if not state.snakes[player_index].alive:
+        return snake_length
+
+    snakes: SnakeAgentsList = state.snakes
+    fruits_locations = state.fruits_locations
+    dists = [[manhaten_dist(fruit, snake.head) for fruit in fruits_locations] for snake in snakes]
+    return 1/(1+min(dists[player_index])) + snake_length
+
+
 
 
 class MinimaxAgent(Player):
