@@ -20,12 +20,18 @@ def heuristic(state: GameState, player_index: int) -> float:
     """
     # Insert your code here...
     snake_length = state.snakes[player_index].length
-    if not state.snakes[player_index].alive or len(state.living_agents) <= 1:
+    if not state.snakes[player_index].alive:
+        return 0
+
+    snakes = state.living_agents
+    fruits_locations = state.fruits_locations
+    num_total_friuts = len(fruits_locations) + sum([state.snakes[snake].length-1 for snake in snakes])
+
+    # Invincible mode activate!!!
+    if len(fruits_locations) == 0 or state.snakes[player_index].length > num_total_friuts/2:
         return snake_length
 
-    snakes: SnakeAgentsList = state.snakes
-    fruits_locations = state.fruits_locations
-    dists = [[manhaten_dist(fruit, snake.head) for fruit in fruits_locations] for snake in snakes]
+    dists = [[manhaten_dist(fruit, state.snakes[snake].head) for fruit in fruits_locations] for snake in snakes]
     return 1 / (1 + min(dists[player_index])) + snake_length
 
 
@@ -59,7 +65,7 @@ class MinimaxAgent(Player):
     def get_action(self, state: GameState) -> GameAction:
         # Insert your code here...
         search_depth = 2
-        val, action = self.minmax(MinimaxAgent.TurnBasedGameState(state, None), search_depth, self.player_index)
+        _, action = self.minmax(MinimaxAgent.TurnBasedGameState(state, None), search_depth, self.player_index)
 
         return action
 
@@ -72,38 +78,60 @@ class MinimaxAgent(Player):
             return heuristic(state.game_state, player_index), state.agent_action
 
         if state.turn == MinimaxAgent.Turn.AGENT_TURN:
-            succ = [self.minmax(
-                MinimaxAgent.TurnBasedGameState(state.game_state, action),
-                depth, player_index)
-                for action in state.game_state.get_possible_actions(player_index)]
-
+            print(state.game_state.game_duration_in_turns, state.game_state.turn_number)
+            print(state.game_state.get_possible_actions(player_index))
             best_val = -math.inf
             best_action: GameAction
-            for s in succ:
-                if best_val < s[0]:
-                    best_val = s[0]
-                    best_action = s[1]
+            for action in state.game_state.get_possible_actions(player_index):
+                val, action = self.minmax(MinimaxAgent.TurnBasedGameState(state.game_state, action), depth, player_index)
+                if best_val < val:
+                    best_val = val
+                    best_action = action
             return best_val, best_action
         else:
-            succ = [self.minmax(
-                MinimaxAgent.TurnBasedGameState(
-                    get_next_state(state.game_state, {**opponents_actions, **{player_index: state.agent_action}}),
-                    None),
-                depth - 1, player_index)
-                for opponents_actions in
-                state.game_state.get_possible_actions_dicts_given_action(state.agent_action,
-                                                                         player_index=self.player_index)]
             best_val = math.inf
-            for s in succ:
-                if best_val > s[0]:
-                    best_val = s[0]
+            for opponents_actions in state.game_state.get_possible_actions_dicts_given_action(state.agent_action, player_index=self.player_index):
+                val, _ = self.minmax(MinimaxAgent.TurnBasedGameState(get_next_state(state.game_state, {**opponents_actions, **{player_index: state.agent_action}}), None), depth - 1, player_index)
+                if best_val > val:
+                    best_val = val
             return best_val, state.agent_action
 
 
 class AlphaBetaAgent(MinimaxAgent):
     def get_action(self, state: GameState) -> GameAction:
         # Insert your code here...
-        pass
+        search_depth = 2
+        _, action = self.abminmax(MinimaxAgent.TurnBasedGameState(state, None), search_depth, self.player_index, -math.inf, math.inf)
+        return action
+
+    def abminmax(self, state: MinimaxAgent.TurnBasedGameState, depth: int, player_index: int, alpha: float, beta: float):
+        if depth == 0 or state.game_state.is_terminal_state or not state.game_state.snakes[player_index].alive:
+            return heuristic(state.game_state, player_index), state.agent_action
+
+        if state.turn == MinimaxAgent.Turn.AGENT_TURN:
+            curr_max = -math.inf
+            best_action: GameAction
+            for action in state.game_state.get_possible_actions(player_index):
+                val, action = self.abminmax(MinimaxAgent.TurnBasedGameState(state.game_state, action), depth, player_index, alpha, beta)
+                if curr_max <= val:
+                    curr_max = val
+                    best_action = action
+                    alpha = max(curr_max, alpha)
+                    if curr_max >= beta and curr_max != -math.inf:
+                        return math.inf, best_action
+            return curr_max, best_action
+        else:
+            curr_min = math.inf
+            for opponents_actions in state.game_state.get_possible_actions_dicts_given_action(state.agent_action, player_index=self.player_index):
+                val, _ = self.abminmax(MinimaxAgent.TurnBasedGameState(
+                    get_next_state(state.game_state, {**opponents_actions, **{player_index: state.agent_action}}),
+                    None), depth - 1, player_index, alpha, beta)
+                if curr_min >= val:
+                    curr_min = val
+                    beta = min(curr_min, beta)
+                    if curr_min <= alpha and curr_min != math.inf:
+                        return -math.inf, state.agent_action
+            return curr_min, state.agent_action
 
 
 def SAHC_sideways():
