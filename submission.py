@@ -28,11 +28,21 @@ def heuristic(state: GameState, player_index: int) -> float:
     num_total_friuts = len(fruits_locations) + sum([state.snakes[snake].length-1 for snake in snakes])
 
     # Invincible mode activate!!!
-    if len(fruits_locations) == 0 or state.snakes[player_index].length > num_total_friuts/2:
+    if (len(fruits_locations) == 0 or state.snakes[player_index].length > num_total_friuts/2) and state.current_winner == player_index:
         return snake_length
 
-    dists = [[manhaten_dist(fruit, state.snakes[snake].head) for fruit in fruits_locations] for snake in snakes]
-    return 1 / (1 + min(dists[player_index])) + snake_length
+    agent_dists = [manhaten_dist(fruit, state.snakes[player_index].head) for fruit in fruits_locations]
+    if not agent_dists:  # no fruits
+        return snake_length
+    if len(snakes) <= 1:  # no opponents
+        return 1 / (1 + min(agent_dists)) + snake_length
+
+    opponents_dists = [min([manhaten_dist(fruit, state.snakes[snake].head) for snake in snakes if snake != player_index]) for fruit in fruits_locations]
+    attainable = [agent_dists[i] for i in range(len(fruits_locations)) if agent_dists[i] < opponents_dists[i]]
+    if not attainable:  # give the lowest value possible to the fruit
+        return 1 / (state.board_size.height + state.board_size.width + min(agent_dists)) + snake_length
+
+    return 1 / (1 + min(attainable)) + snake_length
 
 
 class MinimaxAgent(Player):
