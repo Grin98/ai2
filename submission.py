@@ -1,5 +1,6 @@
 import math
 
+from agents import RandomPlayer
 from environment import Player, GameState, GameAction, get_next_state, SnakeAgentsList
 from utils import get_fitness
 import numpy as np
@@ -28,7 +29,7 @@ def heuristic(state: GameState, player_index: int) -> float:
     num_total_friuts = len(fruits_locations) + sum([state.snakes[snake].length-1 for snake in snakes])
 
     # Invincible mode activate!!!
-    if (len(fruits_locations) == 0 or state.snakes[player_index].length > num_total_friuts/2) and state.current_winner == player_index:
+    if len(fruits_locations) == 0 or (state.snakes[player_index].length > num_total_friuts/2 and state.current_winner.player_index == player_index):
         return snake_length
 
     agent_dists = [manhaten_dist(fruit, state.snakes[player_index].head) for fruit in fruits_locations]
@@ -88,8 +89,6 @@ class MinimaxAgent(Player):
             return heuristic(state.game_state, player_index), state.agent_action
 
         if state.turn == MinimaxAgent.Turn.AGENT_TURN:
-            print(state.game_state.game_duration_in_turns, state.game_state.turn_number)
-            print(state.game_state.get_possible_actions(player_index))
             best_val = -math.inf
             best_action: GameAction
             for action in state.game_state.get_possible_actions(player_index):
@@ -157,7 +156,41 @@ def SAHC_sideways():
     3) print the best moves vector you found.
     :return:
     """
-    pass
+    moves = SAHC_algoritem(50)
+    get_fitness(tuple(moves), True, True)
+
+
+def SAHC_algoritem(sideway_limit: int, num_moves: int = 50):
+    sideways = 0
+    moves = []
+    current_best = get_fitness(tuple(moves))
+    for i in range(num_moves):
+        best_val = current_best
+        best_actions = []
+        for action in GameAction:
+            moves.append(action)
+            new_val = get_fitness(tuple(moves))
+            if new_val > best_val:
+                best_val = new_val
+                best_actions = [action]
+            elif new_val == best_val:
+                best_actions.append(action)
+            moves.pop(len(moves)-1)
+
+        if best_val > current_best:
+            i = np.random.randint(low=0, high=len(best_actions))
+            moves.append(best_actions[i])
+            current_best = best_val
+        elif best_val == current_best and sideways <= sideway_limit:
+            i = np.random.randint(low=0, high=len(best_actions))
+            moves.append(best_actions[i])
+            sideways += 1
+        else:
+            print("no more sideways/better options")
+            print("exited on iteration =", i)
+            return moves
+    return moves
+
 
 
 def local_search():

@@ -212,7 +212,6 @@ class GameState:
         self.game_duration_in_turns = game_duration_in_turns
         self.board_size = board_size
         self.current_winner: WinnerAtTurn = current_winner
-
         self.fruits_locations = copy.deepcopy(fruits_locations)
         self.snakes: SnakeAgentsList = copy.deepcopy(snakes)
         self.grid_map = self._build_grid_map(self.snakes, self.fruits_locations)
