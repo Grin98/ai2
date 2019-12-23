@@ -82,7 +82,7 @@ class GreedyAgent(Player):
                 if len(state.opponents_alive) > 2:
                     # consider only 1 possible opponents actions to reduce time & memory:
                     break
-        return np.random.choice(best_actions)
+        return best_actions[0]
 
     def _heuristic(self, state: GameState) -> float:
         if not state.snakes[self.player_index].alive:

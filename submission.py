@@ -1,4 +1,5 @@
 import math
+import time
 
 from agents import RandomPlayer
 from environment import Player, GameState, GameAction, get_next_state, SnakeAgentsList
@@ -28,9 +29,9 @@ def heuristic(state: GameState, player_index: int) -> float:
     fruits_locations = state.fruits_locations
     num_total_friuts = len(fruits_locations) + sum([state.snakes[snake].length-1 for snake in snakes])
 
-    # Invincible mode activate!!!
-    if len(fruits_locations) == 0 or (state.snakes[player_index].length > num_total_friuts/2 and state.current_winner.player_index == player_index):
-        return snake_length
+    # # Invincible mode activate!!!
+    # if len(fruits_locations) == 0 or (state.snakes[player_index].length > num_total_friuts/2 and state.current_winner.player_index == player_index):
+    #     return snake_length
 
     agent_dists = [manhaten_dist(fruit, state.snakes[player_index].head) for fruit in fruits_locations]
     if not agent_dists:  # no fruits
@@ -142,7 +143,6 @@ class AlphaBetaAgent(MinimaxAgent):
                         return -math.inf, state.agent_action
             return curr_min, state.agent_action
 
-
 def SAHC_sideways():
     """
     Implement Steepest Ascent Hill Climbing with Sideways Steps Here.
@@ -211,10 +211,115 @@ def local_search():
 
 class TournamentAgent(Player):
 
+    # command for testing: python main.py --custom_game --p1 TournamentAgent --p2 GreedyAgent
+
+    total_time = 0
+    turn_time_limit = 58/500
+    start = 0
+
     def get_action(self, state: GameState) -> GameAction:
-        pass
+        actionmm: GameAction = self.get_actionMM(state)
+        self.start = time.time()
+        # Insert your code here...
+        action: GameAction = self.mmBFS(state, self.player_index)
+        self.total_time += time.time() - self.start
+        if actionmm != action:
+            print(actionmm, action)
+        return action
+
+    def mmBFS(self, s: GameState, player_index: int):
+        states = [(s, None)]
+        curr_max = -math.inf
+        best_action: GameAction = GameAction.STRAIGHT
+        # print(s.turn_number)
+        counter = 0
+        while True:# time.time() - self.start < self.turn_time_limit:
+            if not s.snakes[player_index].alive or s.is_terminal_state or not states:
+                return best_action
+            if counter == 2:
+                return best_action
+            counter += 1
+            state, state_action = states.pop()
+            for action in state.get_possible_actions(player_index):
+                first_action = state_action
+                if state_action is None:
+                    first_action = action
+                val, succ_states = self.mmBFSaux((state, first_action), action, player_index)
+                if val > curr_max:
+                    curr_max = val
+                    best_action = first_action
+                states += succ_states
+        print(len(states))
+        return best_action
+
+    def mmBFSaux(self, state_and_first_action, agent_action: GameAction, player_index: int):
+        curr_min = math.inf
+        opened_states = []
+        state, first_action = state_and_first_action
+        for opponents_actions in state.get_possible_actions_dicts_given_action(agent_action, player_index=self.player_index):
+            next_state = get_next_state(state, {**opponents_actions, **{player_index: agent_action}})
+            val = heuristic(next_state, player_index)
+            opened_states.append((next_state, first_action))
+            if curr_min > val:
+                curr_min = val
+        return curr_min, opened_states
+
+    class Turn(Enum):
+        AGENT_TURN = 'AGENT_TURN'
+        OPPONENTS_TURN = 'OPPONENTS_TURN'
+
+    class TurnBasedGameState:
+        """
+        This class is a wrapper class for a GameState. It holds the action of our agent as well, so we can model turns
+        in the game (set agent_action=None to indicate that our agent has yet to pick an action).
+        """
+
+        def __init__(self, game_state: GameState, agent_action: GameAction):
+            self.game_state = game_state
+            self.agent_action = agent_action
+
+        @property
+        def turn(self):
+            return MinimaxAgent.Turn.AGENT_TURN if self.agent_action is None else MinimaxAgent.Turn.OPPONENTS_TURN
+
+    def get_actionMM(self, state: GameState) -> GameAction:
+        # Insert your code here...
+        search_depth = 2
+        _, action = self.minmax(MinimaxAgent.TurnBasedGameState(state, None), search_depth, self.player_index)
+
+        return action
+
+    """
+    return tuple(float, GameAction) where float is the minmax value
+    """
+
+    def minmax(self, state: TurnBasedGameState, depth: int, player_index: int):
+        if depth == 0 or state.game_state.is_terminal_state or not state.game_state.snakes[player_index].alive:
+            return heuristic(state.game_state, player_index), state.agent_action
+
+        if state.turn == MinimaxAgent.Turn.AGENT_TURN:
+            best_val = -math.inf
+            best_action: GameAction
+            for action in state.game_state.get_possible_actions(player_index):
+                val, action = self.minmax(MinimaxAgent.TurnBasedGameState(state.game_state, action), depth,
+                                          player_index)
+                if best_val < val:
+                    best_val = val
+                    best_action = action
+            return best_val, best_action
+        else:
+            best_val = math.inf
+            for opponents_actions in state.game_state.get_possible_actions_dicts_given_action(state.agent_action,
+                                                                                              player_index=self.player_index):
+                val, _ = self.minmax(MinimaxAgent.TurnBasedGameState(
+                    get_next_state(state.game_state, {**opponents_actions, **{player_index: state.agent_action}}),
+                    None), depth - 1, player_index)
+                if best_val > val:
+                    best_val = val
+            return best_val, state.agent_action
 
 
 if __name__ == '__main__':
-    SAHC_sideways()
-    local_search()
+    pass
+    # SAHC_sideways()
+    # local_search()
