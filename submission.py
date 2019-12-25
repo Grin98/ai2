@@ -207,7 +207,7 @@ def local_search():
     3) print the best moves vector you found.
     :return:
     """
-    moves = beam_SAHC_algorithm(30, 0, 50)
+    moves = beam_SAHC_algorithm(30, 10, 50)
     print(moves)
     get_fitness(moves, True, True)
 
@@ -235,14 +235,16 @@ def beam_SAHC_algorithm(k: int, initial_num_moves: int, maximum_num_moves: int =
                     equal_move_sets.append((new_move_set, new_val))
         if not improving_move_sets:
             if equal_move_sets:  # populate improving_move_sets with best equal states
-                equal_move_sets.sort(key=lambda x: x[1])
+                equal_move_sets.sort(key=lambda x: x[1], reverse=True)
                 print([val for _, val in equal_move_sets])
-                improving_move_sets = [(move_set, val) for move_set, val in equal_move_sets if val == equal_move_sets[0][1]]
+                new_beam = [(move_set, val) for move_set, val in equal_move_sets if val == equal_move_sets[0][1]]
+                if len(new_beam) > k:
+                    new_beam = new_beam[:k]
             else:  # the only option is death
                 move_set, _ = beam[0]
                 move_set.append(GameAction.STRAIGHT)
-                improving_move_sets = [(move_set, get_fitness(move_set))]
-        if len(improving_move_sets) <= k:
+                new_beam = [(move_set, get_fitness(move_set))]
+        elif len(improving_move_sets) <= k:
             new_beam = improving_move_sets
         else:
             total = sum([val for _, val in improving_move_sets])

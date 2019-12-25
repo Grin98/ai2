@@ -534,7 +534,7 @@ class SnakesBackendSync:
         if render:
             self.render()
         while self.game_state.turn_number < self.game_duration_in_turns:
-            print(self.game_state.turn_number, self.game_state.snakes[0].alive)
+            # print(self.game_state.turn_number, self.game_state.snakes[0].alive)
             if self._get_num_of_living_snakes() == 0:
                 break
             if human_speed:
