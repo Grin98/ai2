@@ -157,7 +157,7 @@ def SAHC_sideways():
     :return:
     """
     moves = SAHC_algoritem(50)
-    get_fitness(tuple(moves))
+    get_fitness(tuple(moves), True, True)
     print(moves)
 
 
@@ -207,34 +207,50 @@ def local_search():
     3) print the best moves vector you found.
     :return:
     """
-    pass
+    moves = beam_SAHC_algorithm(30, 0, 50)
+    print(moves)
+    get_fitness(moves, True, True)
 
 
-def beam_SAHC_algorithm(k: int, initial_num_moves: int, maximum_num_moves: int):
-    move_sets = [np.random.choice(list(GameAction), initial_num_moves) for _ in range(k)]
+def beam_SAHC_algorithm(k: int, initial_num_moves: int, maximum_num_moves: int = 50):
+    move_sets = [list(np.random.choice(list(GameAction), initial_num_moves)) for _ in range(k)]
     new_beam = [(move_set, get_fitness(move_set)) for move_set in move_sets]
     while True:
         beam = new_beam
-        new_beam = []
-        improvings_move_sets = []
+        improving_move_sets = []
+        equal_move_sets = []
         for move_set, val in beam:
-            for action in GameAction:
-                new_move_set = move_set.append(action)
+            possible_actions = list(GameAction)
+            for action in possible_actions:
+                new_move_set = move_set
+                new_move_set.append(action)
                 if len(new_move_set) == maximum_num_moves:
                     return new_move_set
                 new_val = get_fitness(new_move_set)
-                improvment_delta = new_val - val
-                if improvment_delta > 0:
-                    improvings_move_sets.append((new_move_set, new_val))
-        if not improvings_move_sets:
-            print("no improvements are available")
-            return []
-        if len(improvings_move_sets) <= k:
-            new_beam = improvings_move_sets
+                improvement_delta = new_val - val
+                print(improvement_delta)
+                if improvement_delta > 0:
+                    improving_move_sets.append((new_move_set, new_val))
+                elif improvement_delta == 0:
+                    equal_move_sets.append((new_move_set, new_val))
+        if not improving_move_sets:
+            if equal_move_sets:  # populate improving_move_sets with best equal states
+                equal_move_sets.sort(key=lambda x: x[1])
+                print([val for _, val in equal_move_sets])
+                improving_move_sets = [(move_set, val) for move_set, val in equal_move_sets if val == equal_move_sets[0][1]]
+            else:  # the only option is death
+                move_set, _ = beam[0]
+                move_set.append(GameAction.STRAIGHT)
+                improving_move_sets = [(move_set, get_fitness(move_set))]
+        if len(improving_move_sets) <= k:
+            new_beam = improving_move_sets
         else:
-            total = sum([val for _, val in improvings_move_sets])
-            probabilities = [val/total for _, val in improvings_move_sets]
-            new_beam = np.random.choice(improvings_move_sets, k, False, probabilities)
+            total = sum([val for _, val in improving_move_sets])
+            probabilities = [val/total for _, val in improving_move_sets]
+            print(improving_move_sets)
+            print(len(improving_move_sets))
+            chosen_improvments = list(np.random.choice(range(len(improving_move_sets)), k, False, probabilities))
+            new_beam = [improving_move_sets[i] for i in chosen_improvments]
 
 
 
@@ -292,5 +308,5 @@ class TournamentAgent(Player):
 
 if __name__ == '__main__':
     pass
-    SAHC_sideways()
-    # local_search()
+    # SAHC_sideways()
+    local_search()
