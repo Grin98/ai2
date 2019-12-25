@@ -158,7 +158,6 @@ def SAHC_sideways():
     :return:
     """
     moves = SAHC_algoritem(50)
-    get_fitness(tuple(moves), True, True)
     print(moves)
 
 
@@ -210,7 +209,6 @@ def local_search():
     """
     moves = beam_SAHC_algorithm(15, 10, 50)
     print(moves)
-    get_fitness(moves, True, True)
 
 
 def beam_SAHC_algorithm(k: int, initial_num_moves: int, maximum_num_moves: int = 50):
@@ -234,7 +232,7 @@ def beam_SAHC_algorithm(k: int, initial_num_moves: int, maximum_num_moves: int =
                 elif improvement_delta == 0:
                     equal_move_sets.append((new_move_set, new_val))
         if not improving_move_sets:
-            if equal_move_sets:  # populate improving_move_sets with best equal states
+            if equal_move_sets:  # choose the k best states from the non-improvement states
                 equal_move_sets.sort(key=lambda x: x[1], reverse=True)
                 new_beam = [(move_set, val) for move_set, val in equal_move_sets if val == equal_move_sets[0][1]]
                 if len(new_beam) > k:
@@ -249,8 +247,6 @@ def beam_SAHC_algorithm(k: int, initial_num_moves: int, maximum_num_moves: int =
         else:
             total = sum([val for _, val in improving_move_sets])
             probabilities = [val/total for _, val in improving_move_sets]
-            print(improving_move_sets)
-            print(len(improving_move_sets))
             chosen_improvments = list(np.random.choice(range(len(improving_move_sets)), k, False, probabilities))
             new_beam = [improving_move_sets[i] for i in chosen_improvments]
 
@@ -309,6 +305,5 @@ class TournamentAgent(Player):
 
 
 if __name__ == '__main__':
-    pass
-    # SAHC_sideways()
+    SAHC_sideways()
     local_search()
