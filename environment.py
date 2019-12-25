@@ -553,7 +553,7 @@ class SnakesBackendSync:
 
             self.played_this_turn = []
 
-        #  print(f"Winner: {self.game_state.current_winner}")
+        print(f"Winner: {self.game_state.current_winner}")
 
     def get_living_agents(self):
         """
