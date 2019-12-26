@@ -75,11 +75,16 @@ class MinimaxAgent(Player):
         def turn(self):
             return MinimaxAgent.Turn.AGENT_TURN if self.agent_action is None else MinimaxAgent.Turn.OPPONENTS_TURN
 
+    def __init__(self, depth=2):
+        super().__init__()
+        self.search_depth = depth
+        self.avg_turn_time = 0
+
     def get_action(self, state: GameState) -> GameAction:
         # Insert your code here...
-        search_depth = 2
-        _, action = self.minmax(MinimaxAgent.TurnBasedGameState(state, None), search_depth, self.player_index)
-
+        turn_start_time = time.time()
+        _, action = self.minmax(MinimaxAgent.TurnBasedGameState(state, None), self.search_depth, self.player_index)
+        self.avg_turn_time = self.avg_turn_time + (time.time()-turn_start_time)
         return action
 
     """
@@ -111,8 +116,10 @@ class MinimaxAgent(Player):
 class AlphaBetaAgent(MinimaxAgent):
     def get_action(self, state: GameState) -> GameAction:
         # Insert your code here...
-        search_depth = 2
-        _, action = self.abminmax(MinimaxAgent.TurnBasedGameState(state, None), search_depth, self.player_index, -math.inf, math.inf)
+        bn = 2
+        turn_start_time = time.time()
+        _, action = self.abminmax(MinimaxAgent.TurnBasedGameState(state, None), self.search_depth, self.player_index, -math.inf, math.inf)
+        self.avg_turn_time = self.avg_turn_time + (time.time()-turn_start_time)
         return action
 
     def abminmax(self, state: MinimaxAgent.TurnBasedGameState, depth: int, player_index: int, alpha: float, beta: float):

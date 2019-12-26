@@ -179,5 +179,5 @@ def get_user_command(argv):
     
 if __name__ == '__main__':
     # TournamentAgent GreedyAgent
-    start_custom_game("TournamentAgent", "AlphaBetaAgent", 500, 25, 25, 40, True, False, False)
-    # get_user_command(sys.argv[1:])
+    # start_custom_game("TournamentAgent", "AlphaBetaAgent", 500, 25, 25, 40, True, False, False)
+    get_user_command(sys.argv[1:])
