@@ -212,6 +212,7 @@ class GameState:
         self.game_duration_in_turns = game_duration_in_turns
         self.board_size = board_size
         self.current_winner: WinnerAtTurn = current_winner
+
         self.fruits_locations = copy.deepcopy(fruits_locations)
         self.snakes: SnakeAgentsList = copy.deepcopy(snakes)
         self.grid_map = self._build_grid_map(self.snakes, self.fruits_locations)
@@ -231,25 +232,26 @@ class GameState:
         chooses the given action. This method takes into account dead snakes and thus the result is not necessarily
         3 possible actions for each other player.
         Also, if the given state is terminal, an empty list will be returned.
-        :param player_index: the index of the player who's action is given.
         :param action: action of the player (non-changing).
+        :param player_index: the index of the player who's action is given.
         :return: a list of dictionaries. each dictionary has the form {player_index ==> player_action}, i.e maps between
         living players and their moves. the list includes a dict for each possible move of the opponents.
         """
-        assert  self.snakes[player_index].alive
+        assert self.snakes[player_index].alive
 
         opponents_alive = self.get_opponents_alive(player_index=player_index)
         if len(opponents_alive) == 0:
-            return {player_index: action}
-        for i in range(len(GameAction) ** len(opponents_alive)):
-            opponents_actions_str = np.base_repr(i, base=len(GameAction))
-            opponents_actions_str = '0'*(len(opponents_alive) - len(opponents_actions_str)) + opponents_actions_str
-            # print(opponents_actions_str)
-            snake_actions = list(GameAction)
-            possible_actions_dict = {opp: snake_actions[int(opp_action_str)]
-                                     for opp, opp_action_str in zip(opponents_alive, opponents_actions_str)}
-            possible_actions_dict[player_index] = action
-            yield possible_actions_dict
+            yield {player_index: action}
+        else:
+	        for i in range(len(GameAction) ** len(opponents_alive)):
+	            opponents_actions_str = np.base_repr(i, base=len(GameAction))
+	            opponents_actions_str = '0'*(len(opponents_alive) - len(opponents_actions_str)) + opponents_actions_str
+	            # print(opponents_actions_str)
+	            snake_actions = list(GameAction)
+	            possible_actions_dict = {opp: snake_actions[int(opp_action_str)]
+	                                     for opp, opp_action_str in zip(opponents_alive, opponents_actions_str)}
+	            possible_actions_dict[player_index] = action
+	            yield possible_actions_dict
 
     @property
     def n_agents(self):
@@ -534,7 +536,6 @@ class SnakesBackendSync:
         if render:
             self.render()
         while self.game_state.turn_number < self.game_duration_in_turns:
-            # print(self.game_state.turn_number, self.game_state.snakes[0].alive)
             if self._get_num_of_living_snakes() == 0:
                 break
             if human_speed:
