@@ -128,10 +128,10 @@ class AlphaBetaAgent(MinimaxAgent):
 
         if state.turn == MinimaxAgent.Turn.AGENT_TURN:
             curr_max = -math.inf
-            best_action: GameAction
+            best_action: GameAction = GameAction.STRAIGHT
             for action in state.game_state.get_possible_actions(player_index):
                 val, action = self.abminmax(MinimaxAgent.TurnBasedGameState(state.game_state, action), depth, player_index, alpha, beta)
-                if curr_max <= val:
+                if curr_max < val:
                     curr_max = val
                     best_action = action
                     alpha = max(curr_max, alpha)
@@ -144,7 +144,7 @@ class AlphaBetaAgent(MinimaxAgent):
                 val, _ = self.abminmax(MinimaxAgent.TurnBasedGameState(
                     get_next_state(state.game_state, {**opponents_actions, **{player_index: state.agent_action}}),
                     None), depth - 1, player_index, alpha, beta)
-                if curr_min >= val:
+                if curr_min > val:
                     curr_min = val
                     beta = min(curr_min, beta)
                     if curr_min <= alpha and curr_min != math.inf:
