@@ -49,7 +49,7 @@ def run_game(p1: str, depth=2):
     scores = []
     times = []
     for i in range(10):
-        print("Now running: ", p1, "Game number: ", i+1)
+        print("Now running: ", p1, "Game number: ", i+1, "Depth: ", depth)
         game, turn_time_total = start_custom_game(p1, game_duration=500, board_width=50, board_height=50, n_fruits=51,
                                                   depth=depth)
         scores.append(game.game_state.snakes[0].length)
