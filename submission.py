@@ -88,7 +88,7 @@ class MinimaxAgent(Player):
         return action
 
     """
-    return tuple(float, GameAction) where float is the minmax value
+    returns tuple(float, GameAction) where float is the minmax value
     """
 
     def minmax(self, state: TurnBasedGameState, depth: int, player_index: int):

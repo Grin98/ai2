@@ -1,6 +1,6 @@
 from environment import Grid2DSize, SnakesBackendSync
 from agents import RandomPlayer, KeyboardPlayer, GreedyAgent, BetterGreedyAgent
-from submission import MinimaxAgent, AlphaBetaAgent, TournamentAgent, manhaten_dist
+from submission import MinimaxAgent, AlphaBetaAgent, TournamentAgent
 from optparse import OptionParser
 import sys
 
@@ -89,9 +89,6 @@ def start_custom_game(p1: str, p2: str, game_duration: int, board_width: int, bo
                             board_height,
                             n_fruits,
                             fast_run=fast_run)
-    print("end game")
-    if isinstance(players[0], TournamentAgent):
-        print(players[0].total_time)
     
     
 def get_user_command(argv):
@@ -178,6 +175,4 @@ def get_user_command(argv):
     
     
 if __name__ == '__main__':
-    # TournamentAgent GreedyAgent
-    # start_custom_game("TournamentAgent", "AlphaBetaAgent", 500, 25, 25, 40, True, False, False)
     get_user_command(sys.argv[1:])
